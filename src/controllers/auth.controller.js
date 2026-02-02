@@ -1,6 +1,7 @@
 import { sendWelcomeEmail } from "../emails/emailHandler.js";
 import { ENV } from "../lib/env.js";
 import { generateToken } from "../lib/utils.js";
+import cloudinary from "../lib/cloudinary.js";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 
@@ -53,7 +54,7 @@ export const login = async (req, res) => {
   try {
     if (!email || !password)
       return res.status(400).json({ message: "All fields are required." });
-    
+
     const user = await User.findOne({ email });
     if (!user)
       return res.status(400).json({ message: "Invalid email or password" });
@@ -78,4 +79,43 @@ export const login = async (req, res) => {
 export const logout = (_, res) => {
   res.cookie("token", "", { maxAge: 0 });
   res.status(200).json({ message: "Logged out successfully" });
+};
+
+export const updateProfile = async (req, res) => {
+  const { name, profilePic } = req.body;
+
+  try {
+    if (!name && !profilePic)
+      return res
+        .status(400)
+        .json({ message: "At least one field is required." });
+
+    const userId = req.user._id;
+
+    const updatedData = {};
+    if (name) updatedData.name = name;
+
+    if (profilePic) {
+      const uploadRes = await cloudinary.uploader.upload(profilePic);
+      updatedData.profilePic = uploadRes.secure_url;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updatedData, {
+      new: true,
+    });
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      profilePic: updatedUser.profilePic,
+    });
+  } catch (error) {
+    console.error("Error in updating profile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
