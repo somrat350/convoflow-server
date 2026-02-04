@@ -15,8 +15,8 @@ router.post("/login", login);
 router.post("/logout", logout);
 router.put("/updateProfile", isAuthenticated, updateProfile);
 
-router.get("/check", isAuthenticated, (req, res) =>
-  res.status(200).json(req.user),
-);
+router.get("/check", isAuthenticated, (req, res) => {
+  res.status(200).json(req.user);
+});
 
 export default router;
