@@ -39,6 +39,10 @@ export const sendMessage = async (req, res) => {
     const loggedInUserId = req.user._id;
     const { userId } = req.params;
 
+    if (!text && !image) {
+      return res.status(400).json({ message: "Message content is required" });
+    }
+
     let imageUrl;
     if (image) {
       const uploadRes = await cloudinary.uploader.upload(image);
@@ -47,8 +51,8 @@ export const sendMessage = async (req, res) => {
     const newMessage = new Message({
       senderId: loggedInUserId,
       receiverId: userId,
-      text,
-      image: imageUrl,
+      text: text || null,
+      image: imageUrl || null,
     });
     await newMessage.save();
     res.status(201).json(newMessage);
