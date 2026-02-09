@@ -16,7 +16,20 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/message", messageRoutes);
 
-server.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-  connectDB();
+app.get("/", async (req, res) => {
+  res.status(200).json({ message: "Server running." });
 });
+
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    server.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server", error);
+  }
+};
+
+startServer();
