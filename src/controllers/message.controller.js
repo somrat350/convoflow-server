@@ -20,7 +20,7 @@ export const getMessagesByUserId = async (req, res) => {
     const loggedInUserId = req.user._id;
     const { userId } = req.params;
 
-    const messages = await MessageChannel.find({
+    const messages = await Message.find({
       $or: [
         { senderId: loggedInUserId, receiverId: userId },
         { senderId: userId, receiverId: loggedInUserId },
