@@ -1,6 +1,7 @@
 import Message from "../models/Message.js";
 import User from "../models/User.js";
 import cloudinary from "../lib/cloudinary.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
 export const getAllContacts = async (req, res) => {
   try {
@@ -37,7 +38,7 @@ export const sendMessage = async (req, res) => {
   try {
     const { text, image } = req.body;
     const loggedInUserId = req.user._id;
-    const { userId } = req.params;
+    const { userId: receiverId } = req.params;
 
     if (!text && !image) {
       return res.status(400).json({ message: "Message content is required" });
@@ -50,11 +51,15 @@ export const sendMessage = async (req, res) => {
     }
     const newMessage = new Message({
       senderId: loggedInUserId,
-      receiverId: userId,
+      receiverId,
       text: text || null,
       image: imageUrl || null,
     });
     await newMessage.save();
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
     res.status(201).json(newMessage);
   } catch (error) {
     console.error("Error sending message:", error);
